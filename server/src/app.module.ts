@@ -4,16 +4,16 @@ import { AppService } from './app.service';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TransportsModule } from '@infrastructure/transports/transports.module';
 import { ConfigModule } from '@nestjs/config';
-import config from './infrastructure/config/configuration'
+import config from './infrastructure/config/configuration';
 
 @Module({
 	imports: [
 		ConfigModule.forRoot({
 			isGlobal: true,
-			load: [config]
+			load: [config],
 		}),
 		TransportsModule,
-		EventEmitterModule.forRoot()
+		EventEmitterModule.forRoot(),
 	],
 	controllers: [AppController],
 	providers: [AppService],

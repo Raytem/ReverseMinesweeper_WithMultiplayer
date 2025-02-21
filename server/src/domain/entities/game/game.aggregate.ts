@@ -1,7 +1,8 @@
 import { GameStatus } from '@domain/entities/game/enums/game-status.enum';
-import { Player } from '@domain/entities/game/player.entity';
-import { Cell } from '@domain/entities/game/cell.entity';
+import { Player } from '@domain/entities/player/player.entity';
+import { Cell } from '@domain/entities/cell/cell.entity';
 import { DomainError } from '@domain/errors/domain.error';
+import { ArrayUtil } from '@domain/utils';
 
 export class GameAggregate {
 	private readonly _id: string;
@@ -12,6 +13,7 @@ export class GameAggregate {
 	private readonly _field: Cell[][];
 
 	private readonly _fieldSize: number;
+	private readonly _totalDiamonds: number;
 
 	constructor(id: string, fieldSize: number, totalDiamonds: number) {
 		this._id = id;
@@ -20,6 +22,7 @@ export class GameAggregate {
 		this._players = [];
 		this._nextTurnPlayerId = null;
 		this._fieldSize = fieldSize;
+		this._totalDiamonds = totalDiamonds;
 
 		this.validateField(fieldSize, totalDiamonds);
 		this._field = this.generateField();
@@ -46,7 +49,41 @@ export class GameAggregate {
 	}
 
 	private generateField(): Cell[][] {
-		return [[]] //TODO: make field;
+		const tempField = Array.from(
+			{ length: this._fieldSize },
+			(_, y) => {
+				return Array.from(
+					{ length: this._fieldSize },
+					(_, x) => new Cell(x, y, false, 0, false)
+				)
+			}
+		)
+
+		// shuffling array and setting diamonds to random cells
+		ArrayUtil.shuffle(tempField.flat()).slice(0, this._totalDiamonds).map(el => el.hasDiamond = true)
+
+		return this.setAdjacentDiamonds(tempField);
+	}
+
+	private setAdjacentDiamonds(field: Cell[][]): Cell[][] {
+		for (let x = 0; x < field.length; x++) {
+			for (let y = 0; y < field[x]!.length; y++) {
+				let cnt = 0
+
+				if (x - 1 >= 0 && field[x - 1]![y]!.hasDiamond) cnt++
+				if (x + 1 < this._fieldSize && field[x + 1]![y]!.hasDiamond) cnt++
+				if (y - 1 >= 0 && field[x]![y - 1]!.hasDiamond) cnt++
+				if (y + 1 < this._fieldSize && field[x]![y + 1]!.hasDiamond) cnt++
+				if (x - 1 >= 0 && y - 1 >= 0 && field[x - 1]![y - 1]!.hasDiamond) cnt++
+				if (y + 1 < this._fieldSize && x - 1 >= 0 && field[x - 1]![y + 1]!.hasDiamond) cnt++
+				if (x + 1 < this._fieldSize && y - 1 >= 0 && field[x + 1]![y - 1]!.hasDiamond) cnt++
+				if (x + 1 < this._fieldSize && y + 1 < this._fieldSize && field[x + 1]![y + 1]!.hasDiamond) cnt++
+
+				field[x]![y]!.adjacentDiamonds = cnt;
+			}
+		}
+
+		return field;
 	}
 
 	get id(): string {
@@ -73,12 +110,36 @@ export class GameAggregate {
 		return this._fieldSize;
 	}
 
-	openCell(userId: string, x: number, y: number) {
+	openCell(userId: string, x: number, y: number): Cell {
 		if (x > this._fieldSize || y > this._fieldSize || x < 0 || y < 0) {
 			throw new DomainError('Provided coordinates are out of field bounds');
 		}
 
-		console.log(this._field, userId, x, y);
+		const cell = this._field[x]![y]!;
+
+		if (cell.isOpened) {
+			throw new DomainError('Cell already opened');
+		}
+
+		if (!cell.hasDiamond) {
+			// this._nextTurnPlayerId = //TODO
+		}
+
+		return cell;
 	}
 
+	public printField() {
+		for (let x = 0; x < this._field.length; x++) {
+			const log = []
+			for (let y = 0; y < this._field[x]!.length; y++) {
+				const cur = this._field[x]![y]!;
+				if (cur.hasDiamond) {
+					log.push('💎')
+				} else {
+					log.push(`${cur.adjacentDiamonds}`)
+				}
+			}
+			console.log(`${log.join('\t')}\n`)
+		}
+	}
 }

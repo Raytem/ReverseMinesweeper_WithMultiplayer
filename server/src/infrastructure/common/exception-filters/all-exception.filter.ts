@@ -3,6 +3,7 @@ import { Socket } from 'socket.io';
 import { Response } from 'express';
 import { ExceptionResponseDto } from '@infrastructure/common/shared/responses/exception.response';
 import { DefaultServerEvents } from '@infrastructure/common/enums/ws-events/default-server-events.enum';
+import { DomainError } from '@domain/errors/domain.error';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -37,11 +38,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
 			}
 		}
 
+		if (exception instanceof DomainError) {
+			statusCode = 400;
+			message = exception.message;
+		}
+
 		if (statusCode === undefined) {
 			statusCode = 500;
 		}
 		if (message === undefined) {
-			message = exception?.message || 'Internal server error';
+			message = 'Internal server error';
 		}
 		if (exception?.response?.errors) {
 			errors = exception?.response?.errors;

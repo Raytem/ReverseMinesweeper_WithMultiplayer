@@ -5,10 +5,11 @@ import { InMemoryGameRepository } from '@infrastructure/repositories/in-memory-g
 @Module({
 	imports: [],
 	providers: [
-		{	//TODO: использовать нормальное хранилище (DB/Redis)
+		{
+			//TODO: использовать нормальное хранилище (DB/Redis)
 			provide: IGameRepository.$,
 			useClass: InMemoryGameRepository,
-		}
+		},
 	],
 	exports: [IGameRepository.$],
 })

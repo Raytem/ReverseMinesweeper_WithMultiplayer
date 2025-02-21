@@ -1,7 +1,7 @@
 import { IGameRepository } from '@domain/entities/game/repositories/game.repository.interface';
 import { GameAggregate } from '@domain/entities/game/game.aggregate';
 import { ICrateGameAggregate } from '@domain/entities/game/interfaces/create-game-aggregate.interface';
-import { randomUUID } from 'crypto'
+import { randomUUID } from 'crypto';
 
 export class InMemoryGameRepository implements IGameRepository {
 	private storage = new Map<string, GameAggregate>();
@@ -24,5 +24,4 @@ export class InMemoryGameRepository implements IGameRepository {
 	async save(game: GameAggregate): Promise<void> {
 		this.storage.set(game.id, game);
 	}
-
 }

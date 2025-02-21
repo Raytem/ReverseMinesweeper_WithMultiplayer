@@ -6,5 +6,5 @@ export enum GameServerEvents {
 	PLAYER_DISCONNECTED = 'player-disconnected',
 	CELL_RESULT = 'cell-result',
 	TURN_SWITCHED = 'turn-switched',
-	SCORE_UPDATED = 'score-updated',
+	PLAYER_SCORE_UPDATED = 'player-score-updating',
 }

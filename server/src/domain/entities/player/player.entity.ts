@@ -1,4 +1,3 @@
-
 export class Player {
 	private readonly _id: string;
 	private _diamondsCollected: number;
@@ -17,7 +16,7 @@ export class Player {
 	}
 
 	public collectDiamond(): void {
-		this._diamondsCollected++
+		this._diamondsCollected++;
 	}
 
 	public resetCollectedDiamonds(): void {

@@ -1,5 +1,7 @@
 export class ExceptionResponseDto {
-	statusCode: number;
-	message: string;
-	errors?: string[];
+	constructor(
+		public statusCode: number,
+		public message: string,
+		public errors?: string[]
+	) {}
 }

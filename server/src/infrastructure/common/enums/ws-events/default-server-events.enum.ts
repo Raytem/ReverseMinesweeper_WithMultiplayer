@@ -1,3 +1,3 @@
 export enum DefaultServerEvents {
-	ERROR = 'err'
+	ERROR = 'err',
 }

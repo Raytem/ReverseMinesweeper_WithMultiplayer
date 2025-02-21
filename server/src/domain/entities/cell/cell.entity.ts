@@ -1,17 +1,11 @@
 export class Cell {
 	private readonly _x: number;
 	private readonly _y: number;
-	private readonly _hasDiamond: boolean;
-	private readonly _adjacentDiamonds: number;
+	private _adjacentDiamonds: number;
+	private _hasDiamond: boolean;
 	private _isOpened: boolean;
 
-	constructor(
-		x: number,
-		y: number,
-		hasDiamond: boolean,
-		adjacentDiamonds: number,
-		isOpened: boolean = false,
-	) {
+	constructor(x: number, y: number, hasDiamond: boolean, adjacentDiamonds: number, isOpened: boolean = false) {
 		this._x = x;
 		this._y = y;
 		this._hasDiamond = hasDiamond;
@@ -24,7 +18,7 @@ export class Cell {
 	}
 
 	public get y(): number {
-		return this._y
+		return this._y;
 	}
 
 	public get hasDiamond(): boolean {
@@ -42,5 +36,12 @@ export class Cell {
 	public open(): void {
 		this._isOpened = true;
 	}
-}
 
+	set hasDiamond(hasDiamond: boolean) {
+		this._hasDiamond = hasDiamond;
+	}
+
+	set adjacentDiamonds(adjacentDiamonds: number) {
+		this._adjacentDiamonds = adjacentDiamonds;
+	}
+}

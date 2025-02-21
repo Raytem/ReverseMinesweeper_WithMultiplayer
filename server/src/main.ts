@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Logger } from '@nestjs/common';
-import config from '@/infrastructure/config/configuration'
+import { Logger, ValidationPipe } from '@nestjs/common';
+import config from '@/infrastructure/config/configuration';
 import { AllExceptionsFilter } from '@infrastructure/common/exception-filters/all-exception.filter';
 
 async function bootstrap() {
@@ -10,7 +10,8 @@ async function bootstrap() {
 		logger: logger,
 	});
 
-	app.useGlobalFilters(new AllExceptionsFilter())
+	app.useGlobalFilters(new AllExceptionsFilter());
+	app.useGlobalPipes(new ValidationPipe());
 
 	const port = config().app.port;
 	await app.listen(port);
