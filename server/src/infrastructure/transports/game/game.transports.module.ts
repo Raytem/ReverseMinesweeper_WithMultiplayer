@@ -4,9 +4,10 @@ import { HTTPGameController } from '@infrastructure/transports/game/http/http-ga
 import { RepositoriesModule } from '@infrastructure/repositories/repositories.module';
 import { CustomEventEmitterModule } from '@infrastructure/services/custom-event-emitter/custom-event-emitter.module';
 import { CreateGameUseCase, GetAllGamesUseCase, JoinGameUseCase, LeaveGameUseCase, OpenCellUseCase } from '@usecases/game';
+import { GameEventHandlersModule } from '@infrastructure/domain-event-handlers/game/game-event-handlers.module';
 
 @Module({
-	imports: [RepositoriesModule, CustomEventEmitterModule],
+	imports: [RepositoriesModule, CustomEventEmitterModule, GameEventHandlersModule],
 	controllers: [HTTPGameController],
 	providers: [
 		GameWebSocketGateway,

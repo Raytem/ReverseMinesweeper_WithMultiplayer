@@ -1,8 +1,11 @@
-export class Player {
+import { AggregateRoot } from '@nestjs/cqrs';
+
+export class Player extends AggregateRoot {
 	private readonly _id: string;
 	private _diamondsCollected: number;
 
 	constructor(id: string) {
+		super();
 		this._id = id;
 		this._diamondsCollected = 0;
 	}

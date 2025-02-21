@@ -1,25 +1,28 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { IGameRepository } from '@domain/entities/game/repositories/game.repository.interface';
-import { ICustomEventEmitterService } from '@domain/services/custom-event-emitter.service.interface';
-import { CellResultEvent } from '@domain/event-emitter-events';
+import { EventPublisher } from '@nestjs/cqrs';
 
 @Injectable()
 export class OpenCellUseCase {
 	constructor(
 		@Inject(IGameRepository.$)
 		private readonly gameRepository: IGameRepository,
-		@Inject(ICustomEventEmitterService.$)
-		private customEventEmitterService: ICustomEventEmitterService,
+		private eventPublisher: EventPublisher
 	) {}
 
 	async execute(userId: string, gameId: string, x: number, y: number): Promise<void> {
-		const game = await this.gameRepository.findById(gameId);
+		let game = await this.gameRepository.findById(gameId);
 		if (!game) {
 			throw new NotFoundException();
 		}
+		game = this.eventPublisher.mergeObjectContext(game);
 
-		const cell = game.openCell(userId, x, y);
+		game.openCell(userId, x, y);
 
-		this.customEventEmitterService.emit(CellResultEvent.name, new CellResultEvent(game.id, cell))
+		await this.gameRepository.save(game);
+
+		game.commit();
+
+		game.printField() // TODO: удалить, но сейчас пускай останется для визуализации
 	}
 }

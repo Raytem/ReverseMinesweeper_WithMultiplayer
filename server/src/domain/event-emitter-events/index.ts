@@ -5,4 +5,4 @@ export * from './game-aborted.envent';
 export * from './turn-switched.event';
 export * from './player-connected.event';
 export * from './player-disconnected.event';
-export * from './player-score-updated.event'
+export * from './player-score-updated.event';

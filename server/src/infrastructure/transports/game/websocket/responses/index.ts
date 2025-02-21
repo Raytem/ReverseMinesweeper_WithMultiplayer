@@ -5,4 +5,4 @@ export * from './game-started.response';
 export * from './turn-switched.response';
 export * from './player-connected.response';
 export * from './player-disconnected.response';
-export * from './player-score-updated.response'
+export * from './player-score-updated.response';

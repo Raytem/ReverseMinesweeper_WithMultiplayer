@@ -5,6 +5,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { TransportsModule } from '@infrastructure/transports/transports.module';
 import { ConfigModule } from '@nestjs/config';
 import config from './infrastructure/config/configuration';
+import { CqrsModule } from '@nestjs/cqrs';
 
 @Module({
 	imports: [
@@ -12,8 +13,9 @@ import config from './infrastructure/config/configuration';
 			isGlobal: true,
 			load: [config],
 		}),
-		TransportsModule,
 		EventEmitterModule.forRoot(),
+		CqrsModule,
+		TransportsModule,
 	],
 	controllers: [AppController],
 	providers: [AppService],

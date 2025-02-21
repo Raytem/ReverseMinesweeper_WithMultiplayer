@@ -12,6 +12,7 @@ export class CreateGameUseCase {
 
 	async execute(dto: ICrateGameAggregate): Promise<GameAggregate> {
 		const game = this.gameRepository.create(dto);
+
 		await this.gameRepository.save(game);
 
 		return game;
