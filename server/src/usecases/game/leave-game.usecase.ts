@@ -19,5 +19,9 @@ export class LeaveGameUseCase {
 
 		const player = game.checkPlayerParticipation(userId);
 		game.leaveGame(player)
+
+		await this.gameRepository.save(game)
+
+		game.commit()
 	}
 }

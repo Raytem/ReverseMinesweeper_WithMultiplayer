@@ -48,9 +48,6 @@ export class GameAggregate extends AggregateRoot {
 		const maxFieldSize = 6;
 		const minFieldSize = 2;
 
-		if (fieldSize % 2 !== 0) {
-			throw new DomainError('Field size must be an even number');
-		}
 		if (totalDiamonds % 2 === 0) {
 			throw new DomainError('Diamonds count must be an odd number');
 		}
@@ -157,9 +154,11 @@ export class GameAggregate extends AggregateRoot {
 		this._players = this._players.filter((p) => p.id !== player.id);
 		this.apply(new PlayerDisconnectedEvent(this._id, player.id));
 
+		console.log('LEAVE GAME, status', this._status)
+
 		if (this._status === GameStatus.ONGOING) {
-			this.apply(new GameAbortedEvent(this._id));
 			this._status = GameStatus.FINISHED;
+			this.apply(new GameAbortedEvent(this._id));
 		}
 	}
 

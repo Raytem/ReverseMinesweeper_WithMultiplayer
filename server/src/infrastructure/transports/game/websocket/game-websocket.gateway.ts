@@ -37,7 +37,7 @@ import {
 
 type SocketWithUserId = Socket & { userId: string };
 
-@WebSocketGateway(config().app.ws.port, { transports: ['websocket'] })
+@WebSocketGateway(config().app.ws.port, { cors: true })
 @UseFilters(AllExceptionsFilter)
 @UsePipes(new ValidationPipe())
 export class GameWebSocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -84,14 +84,7 @@ export class GameWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
 	async handleJoinGame(@MessageBody() data: JoinGameDto, @ConnectedSocket() client: SocketWithUserId) {
 		this.logReceivedEvent(GameClientEvents.JOIN_GAME, data, 'handled');
 		client.join(data.gameId)
-		console.log('CLIENT ROOMS: ', client.rooms);
 		await this.joinGameUseCase.execute(data.gameId, client.userId);
-		// try {
-		// 	await this.joinGameUseCase.execute(data.gameId, client.userId);
-		// } catch (e) {
-		// 	client.leave(data.gameId)
-		// 	throw e;
-		// }
 	}
 
 	@SubscribeMessage(GameClientEvents.LEAVE_GAME)
@@ -162,7 +155,13 @@ export class GameWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
 
 		const response: CellResultResponse = {
 			gameId: event.gameId,
-			cellResult: event.cell,
+			cellResult: {
+				x: event.cell.x,
+				y: event.cell.y,
+				adjacentDiamonds: event.cell.adjacentDiamonds,
+				hasDiamond: event.cell.hasDiamond,
+				isOpened: event.cell.isOpened,
+			},
 		};
 		this.server.to(event.gameId).emit(GameServerEvents.CELL_RESULT, response);
 	}
