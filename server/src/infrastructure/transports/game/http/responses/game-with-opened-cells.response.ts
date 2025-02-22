@@ -6,6 +6,8 @@ import { ShortGameResponse } from '@infrastructure/transports/game/http/response
 export class GameWithOpenedCellsResponse extends PickType(ShortGameResponse, [
 	'id',
 	'status',
+	'fieldSize',
+	'totalDiamonds',
 	'startTime',
 	'winnerPlayerId',
 	'nextTurnPlayerId',

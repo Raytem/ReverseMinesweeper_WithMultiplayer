@@ -3,8 +3,9 @@ import { CreateGameDto } from '@infrastructure/transports/game/http/dto';
 import { GameWithOpenedCellsResponse, ShortGameResponse } from '@infrastructure/transports/game/http/responses';
 import { CreateGameUseCase, GetAllGamesUseCase, GetGameByIdUseCase } from '@usecases/game';
 import { GameWithOpenedCellsMapper, ShortGameMapper } from '@infrastructure/transports/game/http/mappers';
-import { ApiResponse } from '@nestjs/swagger';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Games')
 @Controller('/games')
 export class HTTPGameController {
 	constructor(

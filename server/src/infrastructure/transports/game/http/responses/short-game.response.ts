@@ -12,6 +12,14 @@ export class ShortGameResponse {
 	@Expose()
 	status: GameStatus;
 
+	@ApiProperty({ type: Number })
+	@Expose()
+	fieldSize: number
+
+	@ApiProperty({ type: Number })
+	@Expose()
+	totalDiamonds: number
+
 	@ApiProperty({ type: Date, nullable: true })
 	@Expose()
 	startTime: Date | null;

@@ -31,7 +31,7 @@ export default {
 	methods: {
 		joinGame() {
 			if (this.gameId) {
-				this.$router.push(`/game/${this.gameId}`);
+				this.$router.push(`/game/${this.gameId.trim()}`);
 			}
 		},
 	},

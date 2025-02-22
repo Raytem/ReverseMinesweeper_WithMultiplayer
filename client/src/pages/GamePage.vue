@@ -1,141 +1,240 @@
 <template>
 	<v-card class="game-card">
-		<v-card-title>🎯 Игра: {{ game?._id }}</v-card-title>
+		<v-card-title>🎯 Игра: {{ game?.id }}</v-card-title>
 		<v-card-text v-if="loading">⏳ Загрузка данных игры...</v-card-text>
 		<v-card-text v-else-if="game">
-			<p>📅 Статус: {{ game._status }}</p>
-			<p>💎 Всего алмазов: {{ game._totalDiamonds }}</p>
-			<p>👥 Игроков в игре: {{ game._players.length }}</p>
-			<!-- Плашки с состоянием игры -->
-			<v-alert v-if="currentPlayerTurn" type="info" :color="'blue'">
-				🕹️ Сейчас ваш ход!
+			<h3>📅 Статус: {{ getDisplayableGameStatus() }}</h3>
+			<h3>💎 Всего алмазов: {{ game.totalDiamonds }}</h3>
+			<h3>👥 Игроков в игре: {{ game.players.length }}</h3>
+
+			<!--	Счет игроков		-->
+			<v-row v-if="game.status !== GameStatus.NOT_STARTED" class="score-row" justify="space-between" align="center">
+				<v-col>
+					<span class="score-label">Вы: {{ userDiamonds }} 💎</span>
+				</v-col>
+				<v-col class="text-right">
+					<span class="score-label">Оппонент: {{ opponentDiamonds }} 💎</span>
+				</v-col>
+			</v-row>
+
+			<!--	Статус хода		-->
+			<v-alert
+				v-if="game.nextTurnPlayerId !== null && game.status !== GameStatus.FINISHED"
+				type="info"
+				:color="game.nextTurnPlayerId === userId ? 'blue' : 'orange'"
+				class="status-card"
+			>
+				<h4>
+					🕹 {{ game.nextTurnPlayerId === userId ? 'Сейчас ваш ход!' : 'Ходит ваш оппонент!' }}
+				</h4>
 			</v-alert>
-			<v-alert v-if="gameResult" :type="gameResult.type" :color="gameResult.color">
-				{{ gameResult.message }}
+
+			<!--	Результаты игры	-->
+			<v-alert
+				v-if="game.winnerPlayerId !== null"
+				:type="game.winnerPlayerId === userId ? 'success' : 'error'"
+				class="status-card"
+			>
+				<h4>
+					{{ game.winnerPlayerId === userId ? '🏆 Вы победили!' : '❌ Вы проиграли' }}
+				</h4>
+			</v-alert>
+
+			<!--	Плашка при отмене игры	-->
+			<v-alert
+				v-if="isGameAborted"
+				type="error"
+				class="status-card"
+			>
+				<h4>Игра была прервана</h4>
 			</v-alert>
 		</v-card-text>
+
 		<v-alert v-else type="error">❌ Игра не найдена</v-alert>
 
 		<!-- Игровое поле -->
 		<v-container class="centered-container">
-			<game-field v-if="game" :field="game._field" :fieldSize="game._fieldSize" :gameId="game._id" />
+			<game-field v-if="game" :field="game.field" :fieldSize="game.fieldSize" :gameId="game.id" />
 		</v-container>
 
 		<!-- Кнопка отключения -->
-		<v-btn color="red" @click="handleDisconnect">Отключиться</v-btn>
+		<v-btn color="red" @click="handleLeaveGame">Отключиться</v-btn>
 	</v-card>
 </template>
 
 <script>
 import { v4 as uuidv4 } from 'uuid';
-import config from '../../config/config';
-import GameField from '@/components/GameField.vue';
-import axios from 'axios';
-import WebSocketService from '@/services/WebSocketService';
+import WebSocketService from '@/services/websocket/WebSocketService';
+import GameService from '@/services/game/GameService';
+import { GameServerEvents } from '@/services/websocket/events/GameServerEvents';
 import { EventBus } from '@/eventbus';
+import GameField from '@/components/GameField.vue';
+import { GameStatus } from '@/services/game/GameStatus';
 
-// Я ЗНАЮ ЧТО ТУТ ВСЕ ВЫГЛЯДИТ ОЧЕНЬ ПЛОХО И ТАК КАК НЕ НАДО ДЕЛАТЬ, НО Я СПЕШУ И ЛИШЬ БЫ ОНО РАБОТАЛО)
 export default {
+	computed: {
+		GameStatus() {
+			return GameStatus
+		}
+	},
 	components: {
 		GameField
 	},
 	data() {
 		return {
-			game: null,
+			userId: null,
 			loading: true,
-			currentPlayerTurn: false,
-			gameResult: null, // { type: 'success' | 'error', message: string, color: string }
-			userId: null
+
+			game: null,
+			isGameAborted: false,
+			userDiamonds: 0,
+			opponentDiamonds: 0,
+
+			wsEventHandlersMap: new Map([
+				[GameServerEvents.GAME_STARTED, this.handleGameStarted],
+				[GameServerEvents.GAME_ENDED, this.handleGameEnded],
+				[GameServerEvents.GAME_ABORTED, this.handleGameAborted],
+				[GameServerEvents.TURN_SWITCHED, this.handleTurnSwitched],
+				[GameServerEvents.CELL_RESULT, this.handleCellResult],
+				[GameServerEvents.PLAYER_CONNECTED, this.handlePlayerConnected],
+				[GameServerEvents.PLAYER_DISCONNECTED, this.handlePlayerDisconnected],
+				[GameServerEvents.PLAYER_SCORE_UPDATED, this.handlePlayerScoreUpdated],
+			])
 		};
 	},
 	methods: {
-		fetchGameData() {
-			const gameId = this.$route.params.id;
-			this.loading = true;
+		handleWebsocketEvent(event, data) {
+			const handler = this.wsEventHandlersMap.get(event)
+			if (handler !== undefined) {
+				handler.call(this, data)
+			} else {
+				console.debug(`No handler for ws event: ${event}`);
+			}
+		},
 
-			axios.get(`${config.serverBaseUrl}/games/${gameId}`)
-				.then(response => {
-					this.game = response.data;
-					this.loading = false;
+		async fetchGameData() {
+			try {
+				this.loading = true;
+				const game = await GameService.getGameWithOpenedCells(this.$route.params.id);
+				this.game = {
+					...game,
+					field: this.generateField(game.fieldSize, game.openedCells),
+				}
+				this.game.players.forEach((p) => {
+					this.updatePlayerScoreState(p.id, p.diamondsCollected)
 				})
-				.catch(error => {
-					console.error('Error fetching game data', error);
-					this.loading = false;
+			} catch (error) {
+				console.error(error)
+			} finally {
+				this.loading = false;
+			}
+		},
+
+		updatePlayerScoreState(playerId, diamondsCollected) {
+			if (!this.game.players.find((p) => p.id === playerId)) {
+				return;
+			}
+
+			if (this.userId === playerId) {
+				this.userDiamonds = diamondsCollected;
+			} else {
+				this.opponentDiamonds = diamondsCollected;
+			}
+		},
+
+		generateField(fieldSize, openedCells) {
+			const openedCellsMap = new Map();
+			openedCells.forEach((cell) => openedCellsMap.set(`${cell.x},${cell.y}`, cell))
+
+			return Array.from({ length: fieldSize }, (_, y) => {
+				return Array.from({ length: fieldSize }, (_, x) => {
+					const openedCell = openedCellsMap.get(`${x},${y}`);
+					if (openedCell) {
+						return openedCell
+					}
+					return {
+						x,
+						y,
+						isOpened: false,
+					}
 				});
+			});
 		},
-		generateUserId() {
-			return uuidv4();
-		},
+
 		initializeWebSocket() {
 			if (!this.userId) {
-				this.userId = localStorage.getItem('userId') || this.generateUserId();
+				this.userId = localStorage.getItem('userId') || uuidv4();
 				localStorage.setItem('userId', this.userId);
 			}
 
-			// 🛑 Отключаем старый сокет перед созданием нового
-			if (WebSocketService.socket && WebSocketService.socket.connected) {
-				WebSocketService.leaveGame(this.$route.params.id);
-				WebSocketService.disconnect();
-			}
-
-			if (!WebSocketService.socket) {
+			if (!WebSocketService.isSocketInitialized()) {
 				WebSocketService.initializeSocket(this.userId);
 			} else {
-				WebSocketService.socket.connect()
+				WebSocketService.connectSocket()
 			}
 
-
-			WebSocketService.socket.on('connect', () => {
-				console.log('✅ Connected to WebSocket server!');
+			WebSocketService.onConnect(() => {
+				console.debug('Connected to WebSocket server');
 				WebSocketService.joinGame(this.$route.params.id);
 			});
 		},
 
-		handleDisconnect() {
+		getDisplayableGameStatus() {
+			const statusMap = new Map([
+				[GameStatus.NOT_STARTED, 'Ожидание игороков'],
+				[GameStatus.ONGOING, 'Игра в процессе'],
+				[GameStatus.FINISHED, 'Завершена'],
+			])
+			return statusMap.get(this.game.status) ?? 'Не определен';
+		},
+
+		// button events
+		handleLeaveGame() {
 			WebSocketService.leaveGame(this.$route.params.id);
 			this.$router.push(`/`);
 		},
 
-		updateGameState(event, data) {
-			if (data.gameId === this.$route.params.id) {
-				switch (event) {
-					case 'game-started':
-						console.log('Game started', data);
-						this.game._status = 'ongoing'
-						break;
-					case 'game-ended': {
-						const message = data.winnerId === this.userId
-							? 'Вы победили!'
-							: 'Вы проиграли :('
-						this.game._status = 'finished'
-						this.gameResult = { type: 'success', message, color: 'green' }; // Пример победы
-						break;
-					}
-					case 'game-aborted':
-						this.gameResult = { type: 'error', message: 'Игра была прервана.', color: 'red' };
-						this.game._status = 'finished'
-						break;
-					case 'player-connected':
-						this.game._players.push({ id: data.playerId });
-						break;
-					case 'player-disconnected':
-						this.game._players = this.game._players.filter(player => player.id !== data.playerId); // Удаляем игрока
-						break;
-					case 'turn-switched':
-						this.currentPlayerTurn = data.nextUserId === this.userId
-						break;
-					case 'player-score-updating':
-						console.log('Обновление счета игрока:', data);
-						break;
-					case 'cell-result': {
-						const { x, y, hasDiamond, adjacentDiamonds, isOpened } = data.cellResult;
-						const cell = this.game._field[y][x];
-						cell._hasDiamond = hasDiamond;
-						cell._adjacentDiamonds = adjacentDiamonds;
-						cell._isOpened = isOpened;
-					}
-				}
-			}
+		// websocket events
+		handleGameStarted(data) {
+			this.game.status = GameStatus.ONGOING;
+			console.log(data)
+		},
+
+		handleGameEnded(data) {
+			this.game.status = GameStatus.FINISHED
+			this.game.winnerPlayerId = data.winnerId
+			console.log(data)
+		},
+
+		handleGameAborted(data) {
+			this.game.status = GameStatus.FINISHED
+			this.isGameAborted = true;
+			console.log(data)
+		},
+
+		handleTurnSwitched(data) {
+			this.game.nextTurnPlayerId = data.nextUserId
+		},
+
+		handleCellResult(data) {
+			const { x, y, adjacentDiamonds, hasDiamond, isOpened } = data.cellResult;
+			const cell = this.game.field[y][x];
+			cell.adjacentDiamonds = adjacentDiamonds;
+			cell.hasDiamond = hasDiamond;
+			cell.isOpened = isOpened;
+		},
+
+		handlePlayerConnected(data) {
+			this.game.players.push({ id: data.playerId });
+		},
+
+		handlePlayerDisconnected(data) {
+			this.game.players = this.game.players
+				.filter(player => player.id !== data.playerId);
+		},
+
+		handlePlayerScoreUpdated(data) {
+			this.updatePlayerScoreState(data.playerId, data.diamondsCollected)
 		},
 	},
 	mounted() {
@@ -143,28 +242,40 @@ export default {
 		this.initializeWebSocket();
 	},
 	created() {
-		EventBus.$on('game-started', (data) => this.updateGameState('game-started', data));
-		EventBus.$on('game-ended', (data) => this.updateGameState('game-ended', data));
-		EventBus.$on('game-aborted', (data) => this.updateGameState('game-aborted', data));
-		EventBus.$on('player-connected', (data) => this.updateGameState('player-connected', data));
-		EventBus.$on('player-disconnected', (data) => this.updateGameState('player-disconnected', data));
-		EventBus.$on('turn-switched', (data) => this.updateGameState('turn-switched', data));
-		EventBus.$on('player-score-updating', (data) => this.updateGameState('player-score-updating', data));
-		EventBus.$on('cell-result', (data) => this.updateGameState('cell-result', data));
+		Array.from(this.wsEventHandlersMap.keys()).forEach((event) => {
+			EventBus.$on(event, (data) => this.handleWebsocketEvent(event, data))
+		})
 	},
 	beforeDestroy() {
 		WebSocketService.leaveGame(this.$route.params.id);
-		WebSocketService.disconnect();
+		WebSocketService.disconnectSocket();
+		Array.from(this.wsEventHandlersMap.keys()).forEach((event) => {
+			EventBus.$off(event, (data) => this.handleWebsocketEvent(event, data))
+		})
 	}
 };
 </script>
 
 <style scoped>
+.score-row {
+	margin-top: 20px;
+}
+
+.score-label {
+	font-size: 18px;
+	font-weight: bold;
+}
+
+.status-card {
+	margin-top: 20px;
+}
+
 .game-card {
 	max-width: 700px;
 	width: 100%;
-	margin: 0 auto; /* Центрируем карточку по горизонтали */
+	margin: 0 auto;
 }
+
 .centered-container {
 	display: flex;
 	justify-content: center;

@@ -22,6 +22,8 @@ $ npm run serve
 $ npm run start
 ```
 
-
 ## Play game
 **To play this game** from different users you should open app in `different browsers` or in `incognito-mode`
+
+## API docs
+`http://localhost:{{ APP_PORT }}/docs`

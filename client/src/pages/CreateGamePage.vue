@@ -35,7 +35,7 @@
 				>
 					🎉 Игра успешно создана!
 					<br />
-					🏷 <strong>ID игры: {{ createdGameId }}</strong>
+					🏷 <strong>ID игры: <br>{{ createdGameId }}</strong>
 				</v-alert>
 			</v-card-text>
 		</v-card>
@@ -43,8 +43,7 @@
 </template>
 
 <script>
-import axios from 'axios';
-import config from '../../config/config';
+import GameService from '@/services/game/GameService';
 
 export default {
 	name: 'CreateGameForm',
@@ -103,16 +102,10 @@ export default {
 		},
 		async submitForm() {
 			if (this.isFormValid) {
-				const gameData = {
-					fieldSize: +this.fieldSize,
-					totalDiamonds: +this.diamondsCount,
-				};
-				this.loading = true;
 				try {
-					const response = await axios.post(`${config.serverBaseUrl}/games`, gameData);
-					this.createdGameId = response.data._id;
-				} catch (error) {
-					console.error('❌ Ошибка при создании игры:', error);
+					this.loading = true;
+					const game = await GameService.createGame(this.fieldSize, this.diamondsCount)
+					this.createdGameId = game.id;
 				} finally {
 					this.loading = false;
 				}

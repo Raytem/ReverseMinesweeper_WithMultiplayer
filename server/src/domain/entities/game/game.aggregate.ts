@@ -71,6 +71,10 @@ export class GameAggregate extends AggregateRoot {
 		return this.fieldSize;
 	}
 
+	getTotalDiamonds(): number {
+		return this.totalDiamonds;
+	}
+
 	getWinnerPlayerId(): string | null {
 		return this.winnerPlayerId;
 	}
