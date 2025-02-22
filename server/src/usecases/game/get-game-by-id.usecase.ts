@@ -5,7 +5,7 @@ import { IGameRepository } from '@domain/entities/game/repositories/game.reposit
 export class GetGameByIdUseCase {
 	constructor(
 		@Inject(IGameRepository.$)
-		private readonly gameRepository: IGameRepository,
+		private readonly gameRepository: IGameRepository
 	) {}
 
 	async execute(gameId: string): Promise<GameAggregate> {

@@ -1,47 +1,47 @@
 export class Cell {
-	private readonly _x: number;
-	private readonly _y: number;
-	private _adjacentDiamonds: number;
-	private _hasDiamond: boolean;
-	private _isOpened: boolean;
+	private readonly x: number;
+	private readonly y: number;
+	private adjacentDiamonds: number;
+	private hasDiamond: boolean;
+	private isOpened: boolean;
 
 	constructor(x: number, y: number, hasDiamond: boolean, adjacentDiamonds: number, isOpened: boolean = false) {
-		this._x = x;
-		this._y = y;
-		this._hasDiamond = hasDiamond;
-		this._isOpened = isOpened;
-		this._adjacentDiamonds = adjacentDiamonds;
+		this.x = x;
+		this.y = y;
+		this.hasDiamond = hasDiamond;
+		this.isOpened = isOpened;
+		this.adjacentDiamonds = adjacentDiamonds;
 	}
 
-	public get x(): number {
-		return this._x;
+	public getX(): number {
+		return this.x;
 	}
 
-	public get y(): number {
-		return this._y;
+	public getY(): number {
+		return this.y;
 	}
 
-	public get hasDiamond(): boolean {
-		return this._hasDiamond;
+	public getHasDiamond(): boolean {
+		return this.hasDiamond;
 	}
 
-	public get isOpened(): boolean {
-		return this._isOpened;
+	public getIsOpened(): boolean {
+		return this.isOpened;
 	}
 
-	public get adjacentDiamonds(): number {
-		return this._adjacentDiamonds;
+	public getAdjacentDiamonds(): number {
+		return this.adjacentDiamonds;
 	}
 
 	public open(): void {
-		this._isOpened = true;
+		this.isOpened = true;
 	}
 
-	set hasDiamond(hasDiamond: boolean) {
-		this._hasDiamond = hasDiamond;
+	setHasDiamond(hasDiamond: boolean) {
+		this.hasDiamond = hasDiamond;
 	}
 
-	set adjacentDiamonds(adjacentDiamonds: number) {
-		this._adjacentDiamonds = adjacentDiamonds;
+	setAdjacentDiamonds(adjacentDiamonds: number) {
+		this.adjacentDiamonds = adjacentDiamonds;
 	}
 }

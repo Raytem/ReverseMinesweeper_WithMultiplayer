@@ -18,10 +18,10 @@ export class LeaveGameUseCase {
 		game = this.eventPublisher.mergeObjectContext(game);
 
 		const player = game.checkPlayerParticipation(userId);
-		game.leaveGame(player)
+		game.leaveGame(player);
 
-		await this.gameRepository.save(game)
+		await this.gameRepository.save(game);
 
-		game.commit()
+		game.commit();
 	}
 }

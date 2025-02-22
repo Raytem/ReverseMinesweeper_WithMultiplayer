@@ -1,12 +1,13 @@
+import { AggregateRoot } from '@nestjs/cqrs';
 import { GameStatus } from '@domain/entities/game/enums/game-status.enum';
 import { Player } from '@domain/entities/player/player.entity';
 import { Cell } from '@domain/entities/cell/cell.entity';
 import { DomainError } from '@domain/errors/domain.error';
 import { ArrayUtil } from '@domain/utils';
-import { AggregateRoot } from '@nestjs/cqrs';
 import {
 	CellResultEvent,
-	GameAbortedEvent, GameEndedEvent,
+	GameAbortedEvent,
+	GameEndedEvent,
 	GameStartedEvent,
 	PlayerConnectedEvent,
 	PlayerDisconnectedEvent,
@@ -15,33 +16,63 @@ import {
 } from '@domain/event-emitter-events';
 
 export class GameAggregate extends AggregateRoot {
-	static playersCntToStartGame = 2;
+	private readonly id: string;
+	private status: GameStatus;
+	private startTime: Date | null;
+	private players: Player[];
+	private winnerPlayerId: string | null;
+	private nextTurnPlayerId: string | null;
+	private readonly field: Cell[][];
 
-	private readonly _id: string;
-	private _status: GameStatus;
-	private _startTime: Date | null;
-	private _players: Player[];
-	private _winnerPlayerId: string | null;
-	private _nextTurnPlayerId: string | null;
-	private readonly _field: Cell[][];
-
-	private readonly _fieldSize: number;
-	private readonly _totalDiamonds: number;
+	private readonly fieldSize: number;
+	private readonly totalDiamonds: number;
 
 	constructor(id: string, fieldSize: number, totalDiamonds: number) {
 		super();
 
-		this._id = id;
-		this._status = GameStatus.NOT_STARTED;
-		this._startTime = null;
-		this._players = [];
-		this._nextTurnPlayerId = null;
-		this._winnerPlayerId = null;
-		this._fieldSize = fieldSize;
-		this._totalDiamonds = totalDiamonds;
+		this.id = id;
+		this.status = GameStatus.NOT_STARTED;
+		this.startTime = null;
+		this.players = [];
+		this.nextTurnPlayerId = null;
+		this.winnerPlayerId = null;
+		this.fieldSize = fieldSize;
+		this.totalDiamonds = totalDiamonds;
 
 		this.validateField(fieldSize, totalDiamonds);
-		this._field = this.generateField();
+		this.field = this.generateField();
+	}
+
+	getId(): string {
+		return this.id;
+	}
+
+	getStatus(): GameStatus {
+		return this.status;
+	}
+
+	getStartTime(): Date | null {
+		return this.startTime;
+	}
+
+	getPlayers(): Player[] {
+		return this.players;
+	}
+
+	getField(): Cell[][] {
+		return this.field;
+	}
+
+	getNextTurnPlayerId(): string | null {
+		return this.nextTurnPlayerId;
+	}
+
+	getFieldSize(): number {
+		return this.fieldSize;
+	}
+
+	getWinnerPlayerId(): string | null {
+		return this.winnerPlayerId;
 	}
 
 	private validateField(fieldSize: number, totalDiamonds: number): void | never {
@@ -62,14 +93,14 @@ export class GameAggregate extends AggregateRoot {
 	}
 
 	private generateField(): Cell[][] {
-		const tempField = Array.from({ length: this._fieldSize }, (_, y) => {
-			return Array.from({ length: this._fieldSize }, (_, x) => new Cell(x, y, false, 0, false));
+		const tempField = Array.from({ length: this.fieldSize }, (_, y) => {
+			return Array.from({ length: this.fieldSize }, (_, x) => new Cell(x, y, false, 0, false));
 		});
 
 		// shuffling array and setting diamonds to random cells
 		ArrayUtil.shuffle(tempField.flat())
-			.slice(0, this._totalDiamonds)
-			.map((el) => (el.hasDiamond = true));
+			.slice(0, this.totalDiamonds)
+			.map((cell) => cell.setHasDiamond(true));
 
 		return this.setAdjacentDiamonds(tempField);
 	}
@@ -79,52 +110,24 @@ export class GameAggregate extends AggregateRoot {
 			for (let y = 0; y < field[x]!.length; y++) {
 				let cnt = 0;
 
-				if (x - 1 >= 0 && field[y]![x - 1]!.hasDiamond) cnt++;
-				if (x + 1 < this._fieldSize && field[y]![x + 1]!.hasDiamond) cnt++;
-				if (y - 1 >= 0 && field[y - 1]![x]!.hasDiamond) cnt++;
-				if (y + 1 < this._fieldSize && field[y + 1]![x]!.hasDiamond) cnt++;
-				if (x - 1 >= 0 && y - 1 >= 0 && field[y - 1]![x - 1]!.hasDiamond) cnt++;
-				if (y + 1 < this._fieldSize && x - 1 >= 0 && field[y + 1]![x - 1]!.hasDiamond) cnt++;
-				if (x + 1 < this._fieldSize && y - 1 >= 0 && field[y - 1]![x + 1]!.hasDiamond) cnt++;
-				if (x + 1 < this._fieldSize && y + 1 < this._fieldSize && field[y + 1]![x + 1]!.hasDiamond) cnt++;
+				if (x - 1 >= 0 && field[y]![x - 1]!.getHasDiamond()) cnt++;
+				if (x + 1 < this.fieldSize && field[y]![x + 1]!.getHasDiamond()) cnt++;
+				if (y - 1 >= 0 && field[y - 1]![x]!.getHasDiamond()) cnt++;
+				if (y + 1 < this.fieldSize && field[y + 1]![x]!.getHasDiamond()) cnt++;
+				if (x - 1 >= 0 && y - 1 >= 0 && field[y - 1]![x - 1]!.getHasDiamond()) cnt++;
+				if (y + 1 < this.fieldSize && x - 1 >= 0 && field[y + 1]![x - 1]!.getHasDiamond()) cnt++;
+				if (x + 1 < this.fieldSize && y - 1 >= 0 && field[y - 1]![x + 1]!.getHasDiamond()) cnt++;
+				if (x + 1 < this.fieldSize && y + 1 < this.fieldSize && field[y + 1]![x + 1]!.getHasDiamond()) cnt++;
 
-				field[y]![x]!.adjacentDiamonds = cnt;
+				field[y]![x]!.setAdjacentDiamonds(cnt);
 			}
 		}
 
 		return field;
 	}
 
-	get id(): string {
-		return this._id;
-	}
-
-	get status(): GameStatus {
-		return this._status;
-	}
-
-	get startTime(): Date | null {
-		return this._startTime;
-	}
-
-	get players(): Player[] {
-		return this._players;
-	}
-
-	get nextTurnPlayerId(): string | null {
-		return this._nextTurnPlayerId;
-	}
-
-	get fieldSize(): number {
-		return this._fieldSize;
-	}
-
-	get winnerPlayerId(): string | null {
-		return this._winnerPlayerId;
-	}
-
 	joinGame(player: Player, curDate: Date) {
-		if (this._status === GameStatus.ONGOING || this._status === GameStatus.FINISHED) {
+		if (this.status === GameStatus.ONGOING || this.status === GameStatus.FINISHED) {
 			throw new DomainError(`Game already started or finished, cannot join`);
 		}
 
@@ -132,38 +135,38 @@ export class GameAggregate extends AggregateRoot {
 			throw new DomainError(`Max players count in the game is 2`);
 		}
 
-		if (this.findPlayerById(player.id)) {
-			throw new DomainError(`Player (${player.id}) already connected`);
+		if (this.findPlayerById(player.getId())) {
+			throw new DomainError(`Player (${player.getId()}) already connected`);
 		}
 
-		this._players.push(player);
-		this.apply(new PlayerConnectedEvent(this._id, player.id));
+		this.players.push(player);
+		this.apply(new PlayerConnectedEvent(this.id, player.getId()));
 
 		if (this.players.length === 2) {
-			this._status = GameStatus.ONGOING;
-			this._startTime = curDate;
-			this.apply(new GameStartedEvent(this._id));
+			this.status = GameStatus.ONGOING;
+			this.startTime = curDate;
+			this.apply(new GameStartedEvent(this.id));
 
 			const randomPlayer = this.getRandomPlayer();
-			this._nextTurnPlayerId = randomPlayer.id;
-			this.apply(new TurnSwitchedEvent(this._id, randomPlayer.id));
+			this.nextTurnPlayerId = randomPlayer.getId();
+			this.apply(new TurnSwitchedEvent(this.id, randomPlayer.getId()));
 		}
 	}
 
 	leaveGame(player: Player) {
-		this._players = this._players.filter((p) => p.id !== player.id);
-		this.apply(new PlayerDisconnectedEvent(this._id, player.id));
+		this.players = this.players.filter((p) => p.getId() !== player.getId());
+		this.apply(new PlayerDisconnectedEvent(this.id, player.getId()));
 
-		console.log('LEAVE GAME, status', this._status)
+		console.log('LEAVE GAME, status', this.status);
 
-		if (this._status === GameStatus.ONGOING) {
-			this._status = GameStatus.FINISHED;
-			this.apply(new GameAbortedEvent(this._id));
+		if (this.status === GameStatus.ONGOING) {
+			this.status = GameStatus.FINISHED;
+			this.apply(new GameAbortedEvent(this.id));
 		}
 	}
 
 	openCell(userId: string, x: number, y: number): Cell {
-		if (this._status !== GameStatus.ONGOING) {
+		if (this.status !== GameStatus.ONGOING) {
 			throw new DomainError('Game is not started or already finished');
 		}
 
@@ -172,54 +175,54 @@ export class GameAggregate extends AggregateRoot {
 			throw new DomainError(`Player (${userId}) is not a game participant`);
 		}
 
-		if (this._nextTurnPlayerId !== player.id) {
+		if (this.nextTurnPlayerId !== player.getId()) {
 			throw new DomainError('Now is not your turn, wait for the opponent');
 		}
 
-		if (x > this._fieldSize || y > this._fieldSize || x < 0 || y < 0) {
+		if (x > this.fieldSize || y > this.fieldSize || x < 0 || y < 0) {
 			throw new DomainError('Provided coordinates are out of field bounds');
 		}
 
-		const cell = this._field[y]![x]!;
+		const cell = this.field[y]![x]!;
 
-		if (cell.isOpened) {
+		if (cell.getIsOpened()) {
 			throw new DomainError('Cell already opened');
 		} else {
-			cell.open()
+			cell.open();
 		}
 
-		let nextTurnPlayerId = player.id;
-		if (cell.hasDiamond) {
+		let nextTurnPlayerId = player.getId();
+		if (cell.getHasDiamond()) {
 			player.collectDiamond();
-			this.apply(new PlayerScoreUpdatedEvent(this._id, player.id, player.diamondsCollected));
+			this.apply(new PlayerScoreUpdatedEvent(this.id, player.getId(), player.getDiamondsCollected()));
 
 			if (this.areAllDiamondsCollected()) {
 				const winner = this.players.reduce((withMaxDiamonds, curPlayer) => {
-					if (withMaxDiamonds.diamondsCollected < curPlayer.diamondsCollected) {
+					if (withMaxDiamonds.getDiamondsCollected() < curPlayer.getDiamondsCollected()) {
 						return curPlayer;
 					}
 					return withMaxDiamonds;
-				}, this._players[0]!)
+				}, this.players[0]!);
 
-				this._status = GameStatus.FINISHED;
-				this._winnerPlayerId = winner.id;
+				this.status = GameStatus.FINISHED;
+				this.winnerPlayerId = winner.getId();
 
-				this.apply(new GameEndedEvent(this._id, winner.id));
+				this.apply(new GameEndedEvent(this.id, winner.getId()));
 			}
 		} else {
-			const opponent = this.getAnotherPlayer(player.id);
-			this._nextTurnPlayerId = opponent.id;
-			nextTurnPlayerId = opponent.id;
+			const opponent = this.getAnotherPlayer(player.getId());
+			this.nextTurnPlayerId = opponent.getId();
+			nextTurnPlayerId = opponent.getId();
 		}
-		this.apply(new TurnSwitchedEvent(this._id, nextTurnPlayerId));
+		this.apply(new TurnSwitchedEvent(this.id, nextTurnPlayerId));
 
-		this.apply(new CellResultEvent(this._id, cell));
+		this.apply(new CellResultEvent(this.id, cell));
 
 		return cell;
 	}
 
 	findPlayerById(id: string): Player | null {
-		return this._players.find((p) => p.id === id) ?? null;
+		return this.players.find((p) => p.getId() === id) ?? null;
 	}
 
 	checkPlayerParticipation(userId: string): Player | never {
@@ -227,48 +230,43 @@ export class GameAggregate extends AggregateRoot {
 		if (!player) {
 			throw new DomainError(`Player (${userId}) is not a game participant`);
 		}
-		return player
+		return player;
 	}
 
 	private areAllDiamondsCollected(): boolean {
-		const totalCollected = this._players.reduce((acc, player) => acc + player.diamondsCollected, 0)
-		return totalCollected === this._totalDiamonds;
+		const totalCollected = this.players.reduce((acc, player) => acc + player.getDiamondsCollected(), 0);
+		return totalCollected === this.totalDiamonds;
 	}
 
 	private getAnotherPlayer(playerId: string): Player {
-		if (!this._players.length) {
+		if (!this.players.length) {
 			throw new DomainError('Not enough players to get another');
 		}
-		return this.players.find((p) => p.id !== playerId)!;
+		return this.players.find((p) => p.getId() !== playerId)!;
 	}
 
 	private getRandomPlayer(): Player {
-		if (!this._players.length) {
+		if (!this.players.length) {
 			throw new DomainError('Not enough players to get random');
 		}
-		const randomIndex = Math.floor(Math.random() * this._players.length);
-		return this._players[randomIndex]!;
+		const randomIndex = Math.floor(Math.random() * this.players.length);
+		return this.players[randomIndex]!;
 	}
 
 	printField() {
-		for (let y = 0; y < this._field.length; y++) {
-			const log = [];
-			for (let x = 0; x < this._field[y]!.length; x++) {
-				const cur = this._field[y]![x]!;
-				if (cur.hasDiamond) {
-					if (cur.isOpened) {
-						log.push('[💎]');
-					} else {
-						log.push('💎');
-					}
-				} else {
-					if (cur.isOpened) {
-						log.push(`[${cur.adjacentDiamonds}]`);
-					} else {
-						log.push(`${cur.adjacentDiamonds}`);
-					}
+		console.log(`----Field of game: ${this.id}\n`);
 
-				}
+		function getCellView(hasDiamond: boolean, adjacentDiamonds: number, isOpened: boolean): string {
+			const inner = hasDiamond ? '💎' : adjacentDiamonds.toString();
+			return isOpened ? `[${inner}]` : inner;
+		}
+
+		for (let y = 0; y < this.field.length; y++) {
+			const log = [];
+			for (let x = 0; x < this.field[y]!.length; x++) {
+				const cell = this.field[y]![x]!;
+				const view = getCellView(cell.getHasDiamond(), cell.getAdjacentDiamonds(), cell.getIsOpened());
+				log.push(view);
 			}
 			console.log(`${log.join('\t')}\n`);
 		}

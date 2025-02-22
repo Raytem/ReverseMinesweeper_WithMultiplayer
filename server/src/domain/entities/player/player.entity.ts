@@ -1,32 +1,32 @@
 import { AggregateRoot } from '@nestjs/cqrs';
 
 export class Player extends AggregateRoot {
-	private readonly _id: string;
-	private _diamondsCollected: number;
+	private readonly id: string;
+	private diamondsCollected: number;
 
 	constructor(id: string) {
 		super();
-		this._id = id;
-		this._diamondsCollected = 0;
+		this.id = id;
+		this.diamondsCollected = 0;
 	}
 
-	public get id(): string {
-		return this._id;
+	public getId(): string {
+		return this.id;
 	}
 
-	public get diamondsCollected(): number {
-		return this._diamondsCollected;
+	public getDiamondsCollected(): number {
+		return this.diamondsCollected;
 	}
 
 	public collectDiamond(): void {
-		this._diamondsCollected++;
+		this.diamondsCollected++;
 	}
 
 	public resetCollectedDiamonds(): void {
-		this._diamondsCollected = 0;
+		this.diamondsCollected = 0;
 	}
 
 	public hasCollectedAll(totalDiamonds: number): boolean {
-		return this._diamondsCollected >= totalDiamonds;
+		return this.diamondsCollected >= totalDiamonds;
 	}
 }

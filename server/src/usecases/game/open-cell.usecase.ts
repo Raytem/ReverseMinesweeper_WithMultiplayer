@@ -23,6 +23,6 @@ export class OpenCellUseCase {
 
 		game.commit();
 
-		game.printField() // TODO: удалить, но сейчас пускай останется для визуализации
+		game.printField(); // TODO: удалить, но сейчас пускай останется для визуализации
 	}
 }

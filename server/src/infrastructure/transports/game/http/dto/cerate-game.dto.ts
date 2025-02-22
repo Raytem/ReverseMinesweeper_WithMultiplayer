@@ -1,9 +1,12 @@
-import { IsNumber } from 'class-validator';
+import { IsInt } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateGameDto {
-	@IsNumber()
+	@ApiProperty({ type: Number })
+	@IsInt()
 	fieldSize: number;
 
-	@IsNumber()
+	@ApiProperty({ type: Number })
+	@IsInt()
 	totalDiamonds: number;
 }

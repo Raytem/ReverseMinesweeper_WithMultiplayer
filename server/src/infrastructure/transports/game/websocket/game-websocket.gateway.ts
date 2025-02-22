@@ -83,7 +83,7 @@ export class GameWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
 	@SubscribeMessage(GameClientEvents.JOIN_GAME)
 	async handleJoinGame(@MessageBody() data: JoinGameDto, @ConnectedSocket() client: SocketWithUserId) {
 		this.logReceivedEvent(GameClientEvents.JOIN_GAME, data, 'handled');
-		client.join(data.gameId)
+		client.join(data.gameId);
 		await this.joinGameUseCase.execute(data.gameId, client.userId);
 	}
 
@@ -91,7 +91,7 @@ export class GameWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
 	async handleLeaveGame(@MessageBody() data: LeaveGameDto, @ConnectedSocket() client: SocketWithUserId) {
 		this.logReceivedEvent(GameClientEvents.LEAVE_GAME, data, 'handled');
 		await this.leaveGameUseCase.execute(data.gameId, client.userId);
-		client.leave(data.gameId)
+		client.leave(data.gameId);
 	}
 
 	// server events
@@ -156,11 +156,11 @@ export class GameWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
 		const response: CellResultResponse = {
 			gameId: event.gameId,
 			cellResult: {
-				x: event.cell.x,
-				y: event.cell.y,
-				adjacentDiamonds: event.cell.adjacentDiamonds,
-				hasDiamond: event.cell.hasDiamond,
-				isOpened: event.cell.isOpened,
+				x: event.cell.getX(),
+				y: event.cell.getY(),
+				adjacentDiamonds: event.cell.getAdjacentDiamonds(),
+				hasDiamond: event.cell.getHasDiamond(),
+				isOpened: event.cell.getIsOpened(),
 			},
 		};
 		this.server.to(event.gameId).emit(GameServerEvents.CELL_RESULT, response);

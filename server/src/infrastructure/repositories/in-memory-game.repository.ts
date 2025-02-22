@@ -22,6 +22,6 @@ export class InMemoryGameRepository implements IGameRepository {
 	}
 
 	async save(game: GameAggregate): Promise<void> {
-		this.storage.set(game.id, game);
+		this.storage.set(game.getId(), game);
 	}
 }
