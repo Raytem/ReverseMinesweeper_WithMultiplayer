@@ -195,7 +195,7 @@ export default {
 		},
 
 		// websocket events
-		handleGameStarted(_data) {
+		handleGameStarted() {
 			this.game.status = GameStatus.ONGOING;
 		},
 
@@ -204,7 +204,7 @@ export default {
 			this.game.winnerPlayerId = data.winnerId
 		},
 
-		handleGameAborted(_data) {
+		handleGameAborted() {
 			this.game.status = GameStatus.FINISHED
 			this.isGameAborted = true;
 		},
