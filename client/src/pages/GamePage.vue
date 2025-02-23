@@ -167,16 +167,14 @@ export default {
 				localStorage.setItem('userId', this.userId);
 			}
 
-			if (!WebSocketService.isSocketInitialized()) {
-				WebSocketService.initializeSocket(this.userId);
-			} else {
-				WebSocketService.connectSocket()
-			}
-
-			WebSocketService.onConnect(() => {
-				console.debug('Connected to WebSocket server');
+			if (WebSocketService.isSocketConnected()) {
 				WebSocketService.joinGame(this.$route.params.id);
-			});
+			} else {
+				WebSocketService.connectSocket(this.userId, () => {
+					console.debug('Connected to WebSocket server');
+					WebSocketService.joinGame(this.$route.params.id);
+				});
+			}
 		},
 
 		getDisplayableGameStatus() {
