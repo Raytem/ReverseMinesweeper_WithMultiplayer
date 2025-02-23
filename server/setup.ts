@@ -2,10 +2,12 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ClassSerializerInterceptor, INestApplication, ValidationPipe } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AllExceptionsFilter } from '@infrastructure/common/exception-filters/all-exception.filter';
+import { WsAdapter } from '@nestjs/platform-ws';
 
 export function setup(app: INestApplication) {
 	app.enableCors();
 
+	app.useWebSocketAdapter(new WsAdapter(app))
 	app.useGlobalFilters(new AllExceptionsFilter());
 	app.useGlobalPipes(new ValidationPipe());
 	app.useGlobalInterceptors(
