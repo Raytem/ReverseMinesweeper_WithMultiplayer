@@ -7,7 +7,7 @@ export class PlayerMapper {
 		const obj: PlayerResponse = {
 			id: player.getId(),
 			diamondsCollected: player.getDiamondsCollected(),
-		}
+		};
 		return plainToInstance(PlayerResponse, obj);
 	}
 }

@@ -14,7 +14,7 @@ export class ShortGameMapper {
 			winnerPlayerId: game.getWinnerPlayerId(),
 			nextTurnPlayerId: game.getNextTurnPlayerId(),
 			players: game.getPlayers().map((p) => PlayerMapper.map(p)),
-		}
+		};
 		return plainToInstance(ShortGameResponse, obj);
 	}
 }

@@ -14,11 +14,11 @@ export class ShortGameResponse {
 
 	@ApiProperty({ type: Number })
 	@Expose()
-	fieldSize: number
+	fieldSize: number;
 
 	@ApiProperty({ type: Number })
 	@Expose()
-	totalDiamonds: number
+	totalDiamonds: number;
 
 	@ApiProperty({ type: Date, nullable: true })
 	@Expose()

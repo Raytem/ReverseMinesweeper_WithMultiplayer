@@ -67,10 +67,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
 		if (type === 'ws') {
 			const wsClient = wsContext.getClient<Socket>();
 			if (wsClient) {
-				wsClient.send(JSON.stringify({
-					event: DefaultServerEvents.ERROR,
-					data: responseBody,
-				}));
+				wsClient.send(
+					JSON.stringify({
+						event: DefaultServerEvents.ERROR,
+						data: responseBody,
+					})
+				);
 			}
 		}
 

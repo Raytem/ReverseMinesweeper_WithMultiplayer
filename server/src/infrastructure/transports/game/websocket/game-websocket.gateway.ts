@@ -37,7 +37,7 @@ import { SocketManagerService, ExtendedWebSocket } from '@infrastructure/service
 import { GameServerEvents } from '@infrastructure/common/enums/ws-events/game-server-events.enum';
 
 
-const USER_ID_HEADER = 'x-user-id';
+const USER_ID_QUERY_PARAM = 'userId';
 
 
 @WebSocketGateway(config().app.ws.port, { cors: true, transports: ['websocket'] })
@@ -55,7 +55,7 @@ export class GameWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
 
 	async handleConnection(client: ExtendedWebSocket, request: IncomingMessage) {
 		//TODO: тут конечно хорошо было бы сделать middleware для проверки авторизации да и саму авторизацию
-		const userId =  this.extractUserIdFromHeadersOrThrow(client, request);
+		const userId =  this.extractUserIdOrThrow(client, request);
 		this.socketManager.addSocket(client, userId)
 		this.logger.debug(`User connected: ${client.userId}`);
 	}
@@ -70,13 +70,14 @@ export class GameWebSocketGateway implements OnGatewayConnection, OnGatewayDisco
 		this.logger.debug(`User disconnected: ${client.userId}`);
 	}
 
-	private extractUserIdFromHeadersOrThrow(client: ExtendedWebSocket, request: IncomingMessage): string | never {
-		const userId = request.headers[USER_ID_HEADER];
+	private extractUserIdOrThrow(client: ExtendedWebSocket, request: IncomingMessage): string | never {
+		const params = new URLSearchParams(request.url?.substring(1));
+		const userId = params.get('userId');
 		if (!userId) {
 			this.sendEvent(
 				client,
 				DefaultServerEvents.ERROR,
-				new ExceptionResponseDto(401, `Header '${USER_ID_HEADER}' was not provided`)
+				new ExceptionResponseDto(401, `Query param '${USER_ID_QUERY_PARAM}' was not provided`)
 			);
 			client.terminate();
 		}
