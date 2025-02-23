@@ -23,7 +23,7 @@ export class SocketManagerService {
 		extendedSocket.userId = userId;
 		extendedSocket.rooms = new Set();
 
-		this.sockets.set(socketId, extendedSocket)
+		this.sockets.set(socketId, extendedSocket);
 
 		if (!this.userSockets.has(userId)) {
 			this.userSockets.set(userId, new Set());
@@ -60,7 +60,7 @@ export class SocketManagerService {
 				this.rooms.set(roomId, new Set());
 			}
 			this.rooms.get(roomId)!.add(socketId);
-			this.sockets.get(socketId)!.rooms.add(roomId)
+			this.sockets.get(socketId)!.rooms.add(roomId);
 		}
 	}
 
@@ -68,8 +68,8 @@ export class SocketManagerService {
 		if (this.sockets.has(socketId)) {
 			const roomSockets = this.rooms.get(roomId);
 			if (roomSockets) {
-				roomSockets.delete(socketId)
-				this.sockets.get(socketId)!.rooms.delete(roomId)
+				roomSockets.delete(socketId);
+				this.sockets.get(socketId)!.rooms.delete(roomId);
 
 				if (roomSockets.size === 0) {
 					this.rooms.delete(roomId);
@@ -79,7 +79,7 @@ export class SocketManagerService {
 	}
 
 	broadcastToRoom(roomId: string, event: string, data: any) {
-		const roomSockets = this.rooms.get(roomId)
+		const roomSockets = this.rooms.get(roomId);
 		if (roomSockets) {
 			roomSockets.forEach((socketId) => this.sendToSocket(socketId, event, data));
 		}

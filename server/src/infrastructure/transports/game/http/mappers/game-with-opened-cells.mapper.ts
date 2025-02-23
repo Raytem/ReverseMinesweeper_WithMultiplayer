@@ -6,7 +6,7 @@ import { plainToInstance } from 'class-transformer';
 
 export class GameWithOpenedCellsMapper {
 	static map(game: GameAggregate): GameWithOpenedCellsResponse {
-		const obj: GameWithOpenedCellsResponse  = {
+		const obj: GameWithOpenedCellsResponse = {
 			id: game.getId(),
 			status: game.getStatus(),
 			fieldSize: game.getFieldSize(),
@@ -20,7 +20,7 @@ export class GameWithOpenedCellsMapper {
 				.flat()
 				.filter((c) => c.getIsOpened())
 				.map((c) => CellMapper.map(c)),
-		}
+		};
 		return plainToInstance(GameWithOpenedCellsResponse, obj);
 	}
 }
