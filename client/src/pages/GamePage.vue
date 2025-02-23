@@ -195,21 +195,18 @@ export default {
 		},
 
 		// websocket events
-		handleGameStarted(data) {
+		handleGameStarted(_data) {
 			this.game.status = GameStatus.ONGOING;
-			console.log(data)
 		},
 
 		handleGameEnded(data) {
 			this.game.status = GameStatus.FINISHED
 			this.game.winnerPlayerId = data.winnerId
-			console.log(data)
 		},
 
-		handleGameAborted(data) {
+		handleGameAborted(_data) {
 			this.game.status = GameStatus.FINISHED
 			this.isGameAborted = true;
-			console.log(data)
 		},
 
 		handleTurnSwitched(data) {
