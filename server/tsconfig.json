@@ -30,7 +30,7 @@
     "noImplicitOverride": true,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
     "noUnusedParameters": false,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

@@ -16,7 +16,7 @@ async function bootstrap() {
 	await app.listen(port);
 
 	logger.log(`HTTP Server started on port: ${port}`);
-	logger.log(`WebSocket (Socket.io) server started on port: ${config().app.ws.port}`);
+	logger.log(`WebSocket (ws) server started on port: ${config().app.ws.port}`);
 }
 
 bootstrap();

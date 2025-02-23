@@ -6,11 +6,13 @@ import { CustomEventEmitterModule } from '@infrastructure/services/custom-event-
 import { CreateGameUseCase, GetAllGamesUseCase, JoinGameUseCase, LeaveGameUseCase, OpenCellUseCase } from '@usecases/game';
 import { GameEventHandlersModule } from '@infrastructure/domain-event-handlers/game/game-event-handlers.module';
 import { GetGameByIdUseCase } from '@usecases/game/get-game-by-id.usecase';
+import { SocketManagerService } from '@infrastructure/services/socket-manager';
 
 @Module({
 	imports: [RepositoriesModule, CustomEventEmitterModule, GameEventHandlersModule],
 	controllers: [HTTPGameController],
 	providers: [
+		SocketManagerService,
 		GetGameByIdUseCase,
 		GameWebSocketGateway,
 		CreateGameUseCase,
